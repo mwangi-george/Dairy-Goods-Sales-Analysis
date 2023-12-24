@@ -1,0 +1,633 @@
+
+```{r}
+sales_df %>% 
+  glimpse()
+```
+
+# Descriptive Statistics:
+
+Calculate summary statistics (mean, median, mode, range, standard deviation) for variables like total_land_area_acres, number_of_cows, and total_value to understand their distribution across different locations.
+Group the data by location and analyze the average land area, cow population, and total sales to identify trends or variations among different regions.
+```{r}
+sales_df %>% 
+  group_by(location) %>% 
+  summarise(
+    avg_land_area_acres = mean(total_land_area_acres, na.rm = T),
+    avg_cow_pop = mean(number_of_cows, na.rm = T),
+    total_sales = sum(approx_total_revenue_inr)
+  ) %>% 
+  arrange(desc(total_sales)) %>% 
+  gt() %>% 
+  fmt_currency(
+    columns = total_sales, 
+    currency = "INR"
+  ) %>% 
+  data_color(
+    columns = 2:last_col(),
+    method = "numeric",
+     palette = "ggsci::red_material"
+  )
+```
+
+```{r}
+info_currencies(begins_with = "in")
+
+sales_df %>%
+  distinct(year = year(production_date)) %>% 
+  arrange(year) %>% 
+  pull(year)
+```
+```{r}
+sales_df %>%
+  summarise(
+    total_sales = sum(approx_total_revenue_inr), .by = location
+  ) %>% 
+  arrange(desc(total_sales)) %>% 
+  select(Location = location, `Total Sales (INR)` = total_sales) %>%
+              arrange(desc(`Total Sales (INR)`))%>%
+              hchart(type = "bar", hcaes(x = Location, y = `Total Sales (INR)`)) %>% 
+              hc_exporting(enabled = TRUE) %>% 
+              hc_tooltip(crosshairs = TRUE, backgroundColor = "#FCFFC5",
+                         shared = F, borderWidth = 2) %>%
+              hc_title(text="Bar Plot",align="center") %>%
+              hc_subtitle(text="Data Source: highcharts library",align="center") %>%
+              hc_add_theme(hc_theme_elementary()) %>% 
+              hc_chart(zoomType = "x")
+```
+
+
+```{r}
+ sales_df %>% distinct(location) %>% sample_n(10) %>%  pull(location)
+```
+
+
+```{r}
+library(RColorBrewer)
+
+# Define strong blue and light blue colors
+strong_blue <- "#0000FF"
+light_blue <- "#87CEEB"
+
+# Generate a sequence of colors between strong blue and light blue
+num_colors <- 15
+blue_gradient_palette <- colorRampPalette(c(strong_blue, light_blue))(num_colors)
+
+# Display the generated gradient palette
+print(blue_gradient_palette)
+
+
+```
+Analyzing customer preferences and buying behavior based on location and sales channels.
+```{r}
+df <- sales_df %>% 
+  summarise(
+    sales = n(), .by = c(location, product_name)
+  ) %>% 
+  group_by(product_name) %>% 
+  arrange(product_name, sales) 
+  
+df %>% 
+  hchart(
+    type = "column", hcaes(x = location, y = sales, group = product_name),
+    showInLegend = FALSE,
+    maxSize = "15%",
+    dataLabels = list(enabled = TRUE, format = '{point.y: 3f}')
+    ) %>% 
+  hc_colors(colors = c("#007FFF", "#CCCCFF", "#00356B")) %>% 
+  hc_exporting(enabled = TRUE) %>% 
+  hc_tooltip(
+    crosshairs = TRUE, 
+    backgroundColor = "white",
+    shared = F, borderWidth = 4) %>%
+  hc_title(text="Total Dairy Sales by Region",align="center", style = list(fontweight = "bold", fontsize = "15px")) %>%
+  # hc_subtitle(text="Region-wise Analysis",align="center", style = list(fontweight = "bold", fontsize = "13px")) %>%
+  hc_add_theme(hc_theme_elementary()) %>% 
+  hc_chart(zoomType = "x") %>% 
+  hc_xAxis(title = list(text = ""))
+
+
+df %>%
+  filter(sales == max(sales, na.rm = T)) %>% 
+  ungroup() %>% 
+  summarise(max_sales = sum(sales, na.rm = T), .by = location)
+  pull(location)
+```
+
+
+
+
+```{r}
+sales_df %>% 
+  count(location, customer_location, sort = T)
+
+df <- 
+#  Product-wise sales summary
+  sales_df %>%
+  group_by(product_name) %>%
+  summarise(total_quantity_sold = sum(quantity_sold_liters_kg), .groups = "drop") %>% 
+  arrange(total_quantity_sold) 
+
+df %>% 
+  hchart(
+    type = "column", hcaes(x = product_name, y = total_quantity_sold),
+    showInLegend = FALSE,
+    maxSize = "15%",
+    dataLabels = list(enabled = TRUE, format = '{point.y}')
+    ) %>% 
+  hc_colors(colors = c("#00356B")) %>% 
+  hc_exporting(enabled = TRUE) %>% 
+  hc_tooltip(
+    crosshairs = TRUE, 
+    backgroundColor = "white",
+    shared = F, borderWidth = 4) %>%
+  hc_title(text="Total Quantity Sold by Product",align="center", style = list(fontweight = "bold", fontsize = "15px")) %>%
+  hc_subtitle(text="Litres",align="center", style = list(fontweight = "bold", fontsize = "13px")) %>%
+  hc_add_theme(hc_theme_elementary()) %>% 
+  hc_chart(zoomType = "x") %>% 
+  hc_xAxis(title = list(text = "Product")) %>% 
+  hc_yAxis(
+    title = list(text = "Total Quantity Sold (Litres)"),
+    max = max(df$total_quantity_sold) 
+   )
+
+```
+
+
+
+```{r}
+df <- sales_df %>% 
+  summarise(total_revenue = sum(approx_total_revenue_inr), .by = customer_location) %>% 
+  arrange(desc(total_revenue)) 
+
+df %>% 
+  hchart(
+    type = "bar", hcaes(x = customer_location, y = total_revenue),
+    showInLegend = FALSE,
+    maxSize = "15%",
+    dataLabels = list(enabled = TRUE, format = '{point.y}')
+    ) %>% 
+  hc_colors(colors = c("#00356B")) %>% 
+  hc_exporting(enabled = TRUE) %>% 
+  hc_tooltip(
+    crosshairs = TRUE, 
+    backgroundColor = "white",
+    shared = F, borderWidth = 4) %>%
+  hc_title(text="Total Revenue by Customer Location",align="center", style = list(fontweight = "bold", fontsize = "15px")) %>%
+  hc_subtitle(text="NRP",align="center", style = list(fontweight = "bold", fontsize = "13px")) %>%
+  hc_add_theme(hc_theme_elementary()) %>% 
+  hc_chart(zoomType = "x") %>% 
+  hc_xAxis(title = list(text = "")) %>% 
+  hc_yAxis(title = list(text = "Total Revenue"), max = max(df$total_revenue))
+
+
+write_csv(df, "data/delete_this.csv")
+
+```
+
+
+
+```{r}
+library(highcharter)
+library(httr)
+
+data <- content(GET("https://cdn.jsdelivr.net/gh/highcharts/highcharts@v10.3.3/samples/data/usdeur.json"), as = "parsed")
+
+highchart() %>%
+  hc_chart(zoomType = "x") %>%
+  hc_title(text = "USD to EUR exchange rate over time", align = "left") %>%
+  hc_subtitle(
+    text = ifelse(!is.null(Sys.getenv("RSTUDIO")), 
+                  "Click and drag in the plot area to zoom in", 
+                  "Pinch the chart to zoom in"),
+    align = "left"
+  ) %>%
+  hc_xAxis(type = "datetime") %>%
+  hc_yAxis(title = list(text = "Exchange rate")) %>%
+  hc_legend(enabled = FALSE) %>%
+  hc_plotOptions(
+    area = list(
+      fillColor = list(
+        linearGradient = list(x1 = 0, y1 = 0, x2 = 0, y2 = 1),
+        stops = list(
+          list(0, hc_colors()[[1]]),
+          list(1, hc_color(hc_colors()[[1]]) %>% hc_set_opacity(0) %>% hc_get("rgba"))
+        )
+      ),
+      marker = list(radius = 2),
+      lineWidth = 1,
+      states = list(
+        hover = list(lineWidth = 1)
+      ),
+      threshold = NULL
+    )
+  ) %>%
+  hc_add_series(
+    type = "area",
+    name = "USD to EUR",
+    data = data
+  )
+
+```
+
+
+```{r}
+df <- sales_df %>% 
+  filter(location %in% c("Uttar Pradesh", "Telangana")) %>% 
+  group_by(location, production_date) %>%
+  summarise(total_sales = round(sum(approx_total_revenue_inr, na.rm = T)))
+  
+df %>% 
+  hchart(
+    type = "area", hcaes(x = production_date, y = total_sales, group = location, color = location),
+    showInLegend = FALSE,
+    maxSize = "15%",
+    dataLabels = list(enabled = F, format = '{point.y}')
+    ) %>% 
+  #hc_colors(colors = c("#00356B")) %>% 
+  hc_exporting(enabled = TRUE) %>% 
+  hc_tooltip(
+    crosshairs = TRUE, 
+    backgroundColor = "white",
+    shared = F, borderWidth = 4) %>%
+  hc_title(text="Total Revenue by Customer Location over Time",align="center", style = list(fontweight = "bold", fontsize = "15px")) %>%
+  hc_subtitle(text="NRP",align="center", style = list(fontweight = "bold", fontsize = "13px")) %>%
+  hc_add_theme(hc_theme_elementary()) %>% 
+  hc_chart(zoomType = "x") %>% 
+  hc_xAxis(title = list(text = "Date")) %>% 
+  hc_yAxis(title = list(text = "Total Revenue"), max = max(df$total_sales)) %>% 
+  hc_rangeSelector(enabled = TRUE, selected = 4, verticalAlign = "bottom")
+            
+```
+
+
+
+```{r}
+# Shelf life analysis
+shelf_life_analysis <- sales_df %>%
+  summarise(avg_shelf_life = round(mean(shelf_life_days)), .by = product_name) %>% 
+  arrange(desc(avg_shelf_life))
+
+
+shelf_life_analysis %>% 
+  hchart(
+    type = "bar", hcaes(x = product_name, y = avg_shelf_life),
+    showInLegend = FALSE,
+    maxSize = "15%",
+    dataLabels = list(enabled = TRUE, format = '{point.y}')
+    ) %>% 
+  hc_colors(colors = c("#00356B")) %>% 
+  hc_exporting(enabled = TRUE) %>% 
+  hc_tooltip(
+    crosshairs = TRUE, 
+    backgroundColor = "white",
+    shared = F, borderWidth = 4) %>%
+  hc_title(text="Average Shelf Life by Product",align="center", style = list(fontweight = "bold", fontsize = "15px")) %>%
+  hc_subtitle(text="Days",align="center", style = list(fontweight = "bold", fontsize = "13px")) %>%
+  hc_add_theme(hc_theme_elementary()) %>% 
+  hc_chart(zoomType = "x") %>% 
+  hc_xAxis(title = list(text = "")) %>% 
+  hc_yAxis(title = list(text = "Average Shelf Life (Days)"), max = max(shelf_life_analysis$avg_shelf_life))
+
+```
+
+```{r}
+# Group by storage condition and analyze availability (quantity_in_stock_liters_kg)
+availability_by_storage <- sales_df %>%
+  summarise(average_availability = round(mean(quantity_in_stock_liters_kg)), .by = storage_condition) %>% 
+  arrange(desc(average_availability))
+
+
+availability_by_storage %>% 
+  hchart(
+    type = "bar", hcaes(x = storage_condition, y = average_availability),
+    showInLegend = FALSE,
+    maxSize = "15%",
+    dataLabels = list(enabled = TRUE, format = '{point.y}')
+    ) %>% 
+  hc_colors(colors = c("#00356B")) %>% 
+  hc_exporting(enabled = TRUE) %>% 
+  hc_tooltip(
+    crosshairs = TRUE, 
+    backgroundColor = "white",
+    shared = F, borderWidth = 4) %>%
+  hc_title(text="Average Availability by Storage Condition",align="center", style = list(fontweight = "bold", fontsize = "15px")) %>%
+  hc_subtitle(text="Litres",align="center", style = list(fontweight = "bold", fontsize = "13px")) %>%
+  hc_add_theme(hc_theme_elementary()) %>% 
+  hc_chart(zoomType = "x") %>% 
+  hc_xAxis(title = list(text = "")) %>% 
+  hc_yAxis(title = list(text = "Average Availability (Litres)"))
+```
+
+
+```{r}
+# Correlation between shelf life and availability
+cor(sales_df$shelf_life_days, sales_df$quantity_in_stock_liters_kg)
+
+sales_df %>% 
+  filter(location == "Delhi") %>%
+  hchart(
+    type = "scatter", 
+    hcaes(x = shelf_life_days, y = quantity_in_stock_liters_kg,  color = product_name, group = product_name, shape = product_name),
+    showInLegend = TRUE,
+    maxSize = "15%",
+    dataLabels = list(enabled = F, format = '{point.y}')
+    ) %>%
+  hc_exporting(enabled = TRUE) %>% 
+  hc_tooltip(
+    crosshairs = F, 
+    backgroundColor = "white",
+    shared = T, borderWidth = 4) %>%
+  hc_title(text="Relationship between shelf life and quantity in stock",align="left", style = list(fontweight = "bold", fontsize = "15px")) %>%
+  hc_subtitle(text="A higher shelf life does not necessarily mean dairy farmers will hold more quantity in stock",align="left", style = list(fontweight = "bold", fontsize = "13px")) %>%
+  hc_add_theme(hc_theme_elementary()) %>% 
+  hc_chart(zoomType = "x") %>% 
+  hc_xAxis(title = list(text = "Shelf Life (Days)")) %>% 
+  hc_yAxis(title = list(text = "Quantity in Stock (Litres)")) 
+```
+
+```{r}
+df <- sales_df %>%
+  summarise(shelf_life_days = round(mean(shelf_life_days, na.rm = T)), .by = c(product_name, production_year)) %>% 
+  arrange(production_year)
+  
+df %>% 
+  hchart(
+    type = "line", hcaes(x = as.factor(production_year), y = shelf_life_days, group = product_name, color = product_name),
+    showInLegend = TRUE, 
+    maxSize = "15%",
+    dataLabels = list(enabled = TRUE, format = '{point.y}')
+    ) %>%
+  hc_exporting(enabled = TRUE) %>% 
+  hc_tooltip(crosshairs = TRUE, backgroundColor = "white", shared = F, borderWidth = 4) %>%
+  hc_title(text="Average Shelf Life over Time (Days)",align="left", style = list(fontweight = "bold", fontsize = "15px")) %>%
+  hc_subtitle(
+    text="The shelf life of most products seems to have remained relatively constant over the 4 years",
+    align="left", style = list(fontweight = "bold", fontsize = "13px")
+    ) %>%
+  hc_add_theme(hc_theme_elementary()) %>% 
+  hc_chart(zoomType = "x") %>% 
+  hc_xAxis(title = list(text = "Year")) %>% 
+  hc_yAxis(title = list(text = "Shelf Life (Days)")) %>% 
+  hc_rangeSelector(enabled = TRUE, selected = 6, verticalAlign = "bottom") 
+  
+```
+
+
+```{r}
+# Calculate average shelf life
+average_shelf_life <- mean(sales_df$shelf_life_days)
+
+average_shelf_life <- sales_df %>% 
+  summarise(average_shelf_life = round(mean(shelf_life_days, na.rm = T))) %>% 
+  pull(average_shelf_life)
+
+
+# Value Box 1: Average Shelf Life
+valueBox(
+  value = round(average_shelf_life, 2),
+  subtitle = "Average Shelf Life",
+  icon = icon("calendar")
+)
+
+# Calculate maximum shelf life
+max_shelf_life <- max(sales_df$shelf_life_days)
+
+# Value Box 2: Maximum Shelf Life
+valueBox(
+  value = max_shelf_life,
+  subtitle = "Maximum Shelf Life",
+  icon = icon("calendar-check")
+)
+
+# Calculate minimum shelf life
+min_shelf_life <- min(sales_df$shelf_life_days)
+
+# Value Box 3: Minimum Shelf Life
+valueBox(
+  value = min_shelf_life,
+  subtitle = "Minimum Shelf Life",
+  icon = icon("calendar-times")
+)
+
+# Calculate the percentage of expired products
+expired_products_percentage <- mean(sales_df$expiration_date > sales_df$production_date) * 100
+
+# Value Box 5: Percentage of Expired Products
+valueBox(
+  value = paste0(round(expired_products_percentage, 2), "%"),
+  subtitle = "Expired Products",
+  icon = icon("exclamation-triangle")
+)
+
+
+calc_shelf_life_metric <- function(summary_func) {
+  metric_shelf_life <- sales_df %>%
+    summarise(average_shelf_life = round(summary_func(shelf_life_days, na.rm = TRUE))) %>%
+    pull(average_shelf_life)
+  
+  return(metric_shelf_life)
+}
+
+calc_shelf_life_metric(summary_func = mean) %>% class()
+```
+
+
+```{r}
+sales_df %>% 
+  mutate(
+    expired = shelf_life_days != as.numeric(expiration_date - production_date)
+  ) %>% 
+  relocate(expired) %>% 
+  summarise(
+    expired = sum(expired)
+  )
+
+sales_df %>% 
+  summarise( 
+    shelf_life_days = round(mean(shelf_life_days, na.rm = T)), .by = c(product_name, storage_condition)
+    ) %>% 
+  arrange(shelf_life_days) %>% 
+  hchart(
+    type = "column", hcaes(x = product_name, y = shelf_life_days, group = storage_condition, color = storage_condition),
+    showInLegend = FALSE,
+    maxSize = "15%",
+    dataLabels = list(enabled = TRUE, format = '{point.y}')
+    ) %>% 
+  hc_exporting(enabled = TRUE) %>% 
+  hc_tooltip(crosshairs = TRUE, backgroundColor = "white", shared = F, borderWidth = 4) %>%
+  hc_title(text="Average Shelf Life by Product and Storage Condition (Days)",align="left", style = list(fontweight = "bold", fontsize = "15px")) %>%
+  hc_subtitle(text="How does the storage condition affect the shelf life of each Product? Look at Milk",align="left", style = list(fontweight = "bold", fontsize = "13px")) %>%
+  hc_add_theme(hc_theme_elementary()) %>% 
+  hc_chart(zoomType = "x") %>% 
+  hc_xAxis(title = list(text = "")) %>% 
+  hc_yAxis(title = list(text = "Shelf Life (Days)"))
+```
+
+
+
+
+```{r}
+
+locations <- sales_df %>% 
+  summarise(
+    quantity_sold_liters_kg = sum(quantity_sold_liters_kg), .by = c(product_name, sales_channel, location)
+  ) %>%  
+  arrange(quantity_sold_liters_kg) 
+
+# Define a function to create plots for each location
+create_location_plots <- function(location_df) {
+  location_df %>% 
+  hchart(
+    type = "column",
+    hcaes(x = product_name, y = quantity_sold_liters_kg, group = sales_channel),
+    showInLegend = TRUE,
+    maxSize = "15%",
+    dataLabels = list(enabled = TRUE, format = '{point.y: 3f}')
+  ) %>%
+    hc_legend(align = "center") %>%
+    hc_colors(colors = c("#007FFF", "#CCCCFF", "#00356B")) %>%
+    hc_exporting(enabled = TRUE) %>%
+    hc_tooltip(crosshairs = TRUE, backgroundColor = "white", shared = F, borderWidth = 4) %>%
+    hc_title(
+      text = "Total Quantities Sold by Product and Sales Channel", 
+      align = "left",
+      style = list(fontweight = "bold", fontsize = "15px")
+    ) %>%
+    hc_subtitle(
+      text = paste("Showing data for", unique(location_df$location)),
+      align = "left",
+      style = list(fontweight = "bold", fontsize = "13px")
+    ) %>%
+    hc_add_theme(hc_theme_elementary()) %>%
+    hc_chart(zoomType = "x") %>%
+    hc_xAxis(title = list(text = "Product")) %>%
+    hc_yAxis(title = list(text = "Quantity Sold (Litres/kg)"), labels = list(enabled = FALSE))
+}
+
+locations %>% 
+  filter(location == "Telangana") %>% 
+  create_location_plots()
+
+
+```
+
+```{r}
+# Creating a dataframe with approximate latitude and longitude for the given locations
+locations <- c("Madhya Pradesh", "Kerala", "Rajasthan", "Jharkhand", "Gujarat", "Karnataka",
+               "Haryana", "Tamil Nadu", "West Bengal", "Telangana", "Chandigarh", "Maharashtra",
+               "Delhi", "Bihar", "Uttar Pradesh")
+
+# Approximate latitude and longitude coordinates for the locations (These are hypothetical values)
+latitudes <- c(23.8141, 10.8505, 27.0238, 23.6102, 22.2587, 15.3173,
+               29.0588, 11.1271, 22.9868, 17.1232, 30.7333, 19.7515,
+               28.7041, 25.0961, 26.8467)
+
+longitudes <- c(78.2691, 76.2711, 74.2179, 85.2799, 71.1924, 75.7139,
+                76.0856, 78.6569, 87.8550, 79.2088, 76.7794, 75.7139,
+                77.1025, 85.3131, 80.9462)
+
+# Creating the dataframe
+data <- data.frame(Location = locations, Latitude = latitudes, Longitude = longitudes)
+
+# Displaying the dataframe
+print(data)
+
+```
+
+
+```{r}
+library(leaflet)
+data %>%
+  leaflet() %>%
+  addTiles() %>%
+  addMarkers(label = ~Location,
+             popup = ~paste0("Altitude: ",
+                             #Elevation,
+                             "<br/>",
+                             "<br/>",
+                             "Isn't Leaflet neat?"),
+             lng = ~Longitude,
+             lat = ~Latitude)
+```
+
+
+
+
+```{r}
+sales_df %>% 
+  filter(location == "Delhi", product_id == 1) %>% 
+  timetk::plot_time_series(
+    production_date, total_value
+  )
+```
+
+
+
+
+
+
+```{r}
+div(
+  class = "dashboard_description_page",
+  h2(strong("Dairy Goods Sales Dashboard"), style = "margin-bottom: 15px;"),
+  p(
+    "The utilization of RShiny offers a remarkable opportunity for the creation of tailored analytics dashboards, overcoming the constraints of conventional BI tools.     Unlike mainstream BI tools like Power BI or Tableau, which offer limited customization options, RShiny, rooted in the R programming language, provides
+    unparalleled flexibility and customization capabilities. As the developer of this dashboard, I leveraged R's extensive libraries and JavaScript functionalities to
+    craft highly personalized and interactive visualizations. This endeavor aimed to empower users with greater control over the aesthetics and functionalities of
+    their visual data representations."
+    ),
+  p(
+  "Despite having only a year of experience in R programming at the time of developing this Dashboard, I embarked on this project to demonstrate the prowess of
+  Shiny. It's worth noting that during its development, I was still navigating the implementation of best practices in the development process, acknowledging that
+  growth often begins from a place of learning and experimentation."
+  ),
+  h4(
+    strong("Data Acquisition and Exploration")
+  ),
+  p(
+    "The foundational step involved sourcing a comprehensive dataset that encompassed diverse features such as numeric variables, categorical variables, and time
+    series aspects. After approximately two hours of diligent research across platforms like GitHub and Kaggle, I discovered a suitable dataset available at this", 
+    a("Kaggle link.", href = "https://www.kaggle.com/datasets/suraj520/dairy-goods-sales-dataset"), "This dataset meticulously documented information on dairy farms,
+    products, sales, and inventory tracking. Subsequently, I dedicated time to thoroughly explore the dataset, a pivotal phase in any analytics project, enabling a
+    comprehensive understanding of the data through descriptive statistics, charts, and tests."
+  ),
+  h4(
+    strong("Leveraging R's Strengths")
+  ),
+  p(
+    "R's unparalleled strength in conveying analytical findings prompted the selection of Shiny to communicate these results interactively. While alternatives like
+    Quarto or Rmarkdown could generate reports in PDF, Word Doc, or HTML formats, Shiny emerged as the optimal choice for delivering an immersive, interactive user
+    experience."
+  ),
+  h4(
+    strong("What did Shiny offer?")
+  ),
+  p(
+    "The dashboard harnesses the full potential of Shiny, providing an array of interactive elements. Each visual or table is highly interactive, maximizing user engagement. The dashboard includes maximizable boxes, downloadable charts and tables, dual sidebars (left and controlbar on the right), custom sidebars housing slicers for specific plots, time plots integrated with range selectors, customizable navbar and sidebar colors through the controlbar skin tab, support for embedding external links, and a convenient dark mode. Navigation within the dashboard is facilitated via the left sidebar, while the controlbar enables users to toggle and modify dashboard inputs as desired.
+"
+  ),
+  h4(
+    strong("What did I learn?")
+  ),
+  p(
+    "Developing this Shiny app marked a significant transition as it made me realize that building a Shiny app is akin to stepping into the domain of software development. Embracing this shift prompted me to adopt crucial software development best practices like: writing clear and maintainable code, emphasizing documentation, minimizing code duplication, adopting version control, adhering to consistent style guides, and advocating for design before implementation."),
+  p(
+"A pivotal learning moment was the adoption of modularization through Shiny modules. Previously, I would consolidated all code within the app.R file, leading to confusion and inefficiency as the app expanded. Embracing Shiny modules allowed me to break down the application into manageable pieces, enhancing organization, reusability, and maintainability."),
+  p(
+"Additionally, I acquired some basic proficiency in utilizing the JavaScript", 
+a("Highcharts library", href = "https://www.highcharts.com/demo"), "for interactive data visualization in R, facilitated by its wrapper, the highcharter R package. The familiarity of its syntax, akin to ggplot2, eased the transition and allowed for seamless generation of interactive graphics with the added feature of exporting in various formats."
+  ),
+  h4(
+    strong("What next after this?")
+  ),
+  p(
+    "This project was huge achievement for me due to the things it opened my eyes to. I had to do a lot of research, which led to me finding out about a shiny
+application framework called", a("rhino", href = "https://appsilon.github.io/rhino/"), "developed by",
+a("Appsilon.", href = "https://appsilon.com/"), "Moving forward, I aspire to employ the rhino framework and the associated",  a("rhinoverse", href = "https://rhinoverse.dev/#rhino"), "packages in upcoming projects, recognizing the efficiencies and advanced features these frameworks offer. Furthermore, this project illuminated the significance of Continuous Integration/Continuous Deployment (CI/CD) techniques, a facet I aim to integrate into future projects to automate data extraction, testing, and deployment processes using tools like GitHub Actions for real-time data applications. It's amazing how much this project exposed me to."
+  ),
+  p("For those interested in accessing the source code for this project, please feel free to reach out to me", a("here.", href = "https://www.twitter.com/mwangi__george"))
+)
+```
+
+
+
