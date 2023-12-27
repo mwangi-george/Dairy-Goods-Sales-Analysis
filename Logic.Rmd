@@ -631,3 +631,95 @@ a("Appsilon.", href = "https://appsilon.com/"), "Moving forward, I aspire to emp
 
 
 
+
+
+```{r}
+fread_fun <- function(){
+  start_time <- Sys.time()
+  # Data used by the app
+  data.table::fread("data/dairy_dataset.csv") %>%
+    clean_names() %>%
+    mutate(
+      production_date = ymd(production_date),
+      date = ymd(date), 
+      production_year = year(production_date), 
+      expiration_date = ymd(expiration_date)
+    )
+
+  end_time <- Sys.time()
+  end_time - start_time
+}
+
+fread_fun()
+
+```
+
+```{r}
+readr_fun <- function(){
+  start_time <- Sys.time()
+  # Data used by the app
+  readr::read_csv("data/dairy_dataset.csv", show_col_types = F) %>%
+    clean_names() %>%
+    mutate(
+      production_date = ymd(production_date),
+      date = ymd(date), 
+      production_year = year(production_date), 
+      expiration_date = ymd(expiration_date)
+    )
+
+  end_time <- Sys.time()
+  end_time - start_time
+}
+
+as.numeric(readr_fun())
+```
+
+```{r}
+iterations <- 1:10
+
+readr_times <- replicate(10, readr_fun())
+
+fread_times <- replicate(10, fread_fun())
+
+outcomes <- tibble(
+  readr_times = readr_times,
+  fread_times = fread_times
+)
+
+outcomes %>% 
+  summarise(across(1:2, ~mean(.))) %>% 
+  pivot_longer(everything(), names_to = "package", values_to = "processingTime") %>% 
+  hchart(type = "bar", hcaes(x = package, y = processingTime))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
