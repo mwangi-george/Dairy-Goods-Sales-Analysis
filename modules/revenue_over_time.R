@@ -34,8 +34,11 @@ revenue_over_time_server <- function(id, data, location_to_plot) {
           hc_chart(zoomType = "x") %>%
           hc_xAxis(title = list(text = "Date")) %>%
           hc_yAxis(title = list(text = "Total Revenue"), max = max(summary_df()$total_revenue)) %>%
-          hc_rangeSelector(enabled = TRUE, selected = 6, verticalAlign = "bottom")
+          hc_rangeSelector(enabled = TRUE, selected = 6, verticalAlign = "bottom") %>% 
+          hc_plotOptions(series = list(states = list(hover = list(enabled = TRUE, color = "red"))))
       })
-    #}
+    # } else {
+    #   output$total_revenue_over_time <- renderHighchart({NULL})
+    # }
   })
 }

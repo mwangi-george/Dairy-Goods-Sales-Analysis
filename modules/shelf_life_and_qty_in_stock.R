@@ -34,6 +34,8 @@ shelf_life_and_qty_in_stock_server <- function(id, data, location_to_plot) {
           hc_xAxis(title = list(text = "Shelf Life (Days)")) %>% 
           hc_yAxis(title = list(text = "Quantity in Stock (Litres)")) 
       })
+    } else {
+      output$shelf_life_qty_stocked <- renderHighchart({NULL})
     }
   })
 }

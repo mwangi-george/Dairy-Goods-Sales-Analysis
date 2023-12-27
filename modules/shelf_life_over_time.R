@@ -33,8 +33,11 @@ shelf_life_analysis_over_time_server <- function(id, data) {
           hc_chart(zoomType = "x") %>%
           hc_xAxis(title = list(text = "Year")) %>%
           hc_yAxis(title = list(text = "Shelf Life (Days)"), labels = list(enabled = FALSE)) %>%
-          hc_rangeSelector(enabled = TRUE, selected = 6, verticalAlign = "bottom")
+          hc_rangeSelector(enabled = TRUE, selected = 6, verticalAlign = "bottom") %>% 
+          hc_plotOptions(series = list(states = list(hover = list(enabled = TRUE, color = "red"))))
       })
+    } else {
+      output$shelf_life_over_time_by_product <- renderHighchart({NULL})
     }
   })
 }

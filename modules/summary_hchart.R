@@ -35,8 +35,11 @@ summary_stats_hchart_server <- function(id, data) {
           hc_add_theme(hc_theme_elementary()) %>%
           hc_chart(zoomType = "x") %>%
           hc_xAxis(title = list(text = "")) %>%
-          hc_yAxis(labels = list(enabled = FALSE), title = list(text = "Total Revenue (NPR)"))
+          hc_yAxis(labels = list(enabled = FALSE), title = list(text = "Total Revenue (NPR)")) %>% 
+          hc_plotOptions(series = list(states = list(hover = list(enabled = TRUE, color = "red"))))
       })
+    } else {
+      output$summary_highchart <- renderHighchart({NULL})
     }
   })
 }

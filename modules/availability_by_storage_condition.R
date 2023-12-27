@@ -34,8 +34,11 @@ availability_by_storage_condition_server <- function(id, data) {
           hc_add_theme(hc_theme_elementary()) %>% 
           hc_chart(zoomType = "x") %>% 
           hc_xAxis(title = list(text = "")) %>% 
-          hc_yAxis(title = list(text = "Average Availability (Litres)"), labels = list(enabled = FALSE))
+          hc_yAxis(title = list(text = "Average Availability (Litres)"), labels = list(enabled = FALSE)) %>% 
+          hc_plotOptions(series = list(states = list(hover = list(enabled = TRUE, color = "red"))))
       })
+    } else {
+      output$availavility_by_storage_condition <- renderHighchart({NULL})
     }
   })
 }

@@ -29,8 +29,11 @@ storage_condition_on_shelf_life_server <- function(id, data, locations) {
           hc_add_theme(hc_theme_elementary()) %>%
           hc_chart(zoomType = "x") %>%
           hc_xAxis(title = list(text = "Product")) %>%
-          hc_yAxis(title = list(text = "Shelf Life (Days)"), labels = list(enabled = FALSE))
+          hc_yAxis(title = list(text = "Shelf Life (Days)"), labels = list(enabled = FALSE)) %>% 
+          hc_plotOptions(series = list(states = list(hover = list(enabled = TRUE, color = "red"))))
       })
+    } else {
+      output$storage_condition_effect_on_shelf_life <- renderHighchart({NULL})
     }
   })
 }

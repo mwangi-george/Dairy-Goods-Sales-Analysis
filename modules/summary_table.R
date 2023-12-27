@@ -61,6 +61,8 @@ summary_stats_table_server <- function(id, data) {
             palette = "ggsci::blue_material"
           )
       })
+    } else {
+      output$summary_table <- render_gt({NULL})
     }
   })
 }

@@ -40,7 +40,8 @@ qty_sold_by_product_sales_channel_location_server <- function(id, data, location
         hc_add_theme(hc_theme_elementary()) %>%
         hc_chart(zoomType = "x") %>%
         hc_xAxis(title = list(text = "Product")) %>%
-        hc_yAxis(title = list(text = "Quantity Sold (Litres/kg)"), labels = list(enabled = FALSE))
+        hc_yAxis(title = list(text = "Quantity Sold (Litres/kg)"), labels = list(enabled = FALSE)) %>% 
+        hc_plotOptions(series = list(states = list(hover = list(enabled = TRUE, color = "red"))))
     }
 
 
@@ -50,6 +51,8 @@ qty_sold_by_product_sales_channel_location_server <- function(id, data, location
           filter(location == location_to_plot) %>%
           create_location_plots()
       })
+    } else {
+      output$qty_sold_by_product_sales_channel_location <- renderHighchart({NULL})
     }
   })
 }

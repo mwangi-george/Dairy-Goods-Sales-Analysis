@@ -33,8 +33,11 @@ quantity_sold_by_product_server <- function(id, data) {
           hc_yAxis(
             title = list(text = "Total Quantity Sold (Litres)"),
             max = max(summary_df()$total_quantity_sold), labels = list(enabled = FALSE)
-          )
+          ) %>% 
+          hc_plotOptions(series = list(states = list(hover = list(enabled = TRUE, color = "red"))))
       })
+    } else {
+      output$qty_sold_by_product <- renderHighchart({NULL})
     }
   })
 }

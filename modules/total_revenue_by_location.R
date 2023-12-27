@@ -34,8 +34,11 @@ total_revenue_by_location_server <- function(id, data) {
           hc_add_theme(hc_theme_elementary()) %>%
           hc_chart(zoomType = "x") %>%
           hc_xAxis(title = list(text = "")) %>%
-          hc_yAxis(title = list(text = "Total Revenue"), max = max(summary_df()$total_revenue), labels = list(enabled = FALSE))
+          hc_yAxis(title = list(text = "Total Revenue"), max = max(summary_df()$total_revenue), labels = list(enabled = FALSE)) %>% 
+          hc_plotOptions(series = list(states = list(hover = list(enabled = TRUE, color = "red"))))
       })
+    } else {
+      output$total_revenue_by_location <- renderHighchart({NULL})
     }
   })
 }
