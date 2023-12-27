@@ -9,7 +9,7 @@ revenue_over_time_server <- function(id, data, location_to_plot) {
   moduleServer(id, function(input, output, session) {
     summary_df <- reactive({
       data %>%
-        filter(location == location_to_plot) %>%
+        filter(location %in% c(location_to_plot)) %>%
         summarise(total_revenue = round(sum(approx_total_revenue_inr, na.rm = T)), .by = c(location, production_date)) %>%
         arrange(production_date)
     })
