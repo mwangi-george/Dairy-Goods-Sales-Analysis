@@ -1,6 +1,6 @@
 # Required Libraries
 pacman::p_load(
-  tidyverse, janitor, shiny, bs4Dash, DT, waiter, thematic, shinyWidgets, gt, highcharter, paletteer, ggsci, shinycssloaders
+  tidyverse, janitor, shiny, shinyjs, bs4Dash, DT, waiter, thematic, shinyWidgets, gt, highcharter, paletteer, ggsci, shinycssloaders
 )
 
 # A global style for buttons
@@ -51,8 +51,9 @@ ui <- dashboardPage(
 )
 
 
+
 # Build the backend logic
-server <- function(input, output, session) {
+server <- function(input, output, session) { 
   
   # This renders the Developers info (on the top right of the UI)
   output$user <- renderUser({
